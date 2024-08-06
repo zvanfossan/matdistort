@@ -1,3 +1,15 @@
 [project]
 name = 'matdistort'
 version = "0.0.1"
+description = "Automated function for setting up VASP calculations"
+authors = [{ name = "Zach Van Fossan", email = "zvanfossan@gmail.com"}]
+requires-python = ">=3.9"
+readme = "READ.md"
+dependencies = [
+    "numpy>=1.26.4"
+    "pymatgen>=2024.6.10"
+    ]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
