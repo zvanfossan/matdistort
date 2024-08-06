@@ -3,11 +3,11 @@ import numpy as np
 from pymatgen.core.structure import Structure
 
 def create_directories_with_poscars(parent_structure, param_dict):
-    struct = Structure.from_file(parent_structure)
     """
     Walk through the directory tree and distort the parent structure based on the values of the directories.
     Distortions by irreducible representations are defined using the same notation as Isodistort as provided 
-    by the Isotropy Software Suit.
+    by the Isotropy Software Suit. Normal strains should be provided in decimal form and shear strains should
+    be defined using the basic definition of shear strain.
 
     Parameters:
         parent_structure (file path to parent structure POSCAR): The parent structure to be distorted
@@ -56,14 +56,15 @@ def create_directories_with_poscars(parent_structure, param_dict):
         def create_dirs(current_path, sublists):
             if not sublists:
                 return
-            current_level = sublists[0]
-            for value in current_level:
+            for value in sublists:
                 if value == 0:
                     continue
-                dir_name = str(value).replace('-', 'n')
-                new_dir_path = os.path.join(current_path, dir_name)
-                os.makedirs(new_dir_path, exist_ok=True)
-                create_dirs(new_dir_path, sublists[1:])
+                current_level = sublists[0]
+                for value in current_level:
+                    dir_name = str(value).replace('-', 'n')
+                    new_dir_path = os.path.join(current_path, dir_name)
+                    os.makedirs(new_dir_path, exist_ok=True)
+                    create_dirs(new_dir_path, sublists[1:])
 
         # Create the base directory if it does not exist
         os.makedirs(base_path, exist_ok=True)
@@ -166,28 +167,58 @@ def create_directories_with_poscars(parent_structure, param_dict):
         leaf_dirs = []
         find_leaf_dirs(base_path)
         keys = get_keys_from_dict(param_dict)
-        print(keys)
-        print(leaf_dirs)
         for i, leaf_dir in enumerate(leaf_dirs):
 
             normalized_path = os.path.normpath(leaf_dir)
             directories = normalized_path.split(os.sep)
             directories.pop(0)
+            for i, value in enumerate(directories):
+                if 'n' in value:
+                    directories[i] = value.replace('n', '-')
             float_list = [float(item) for item in directories]
-            
+            print(float_list)
             ###modify POSCAR structure here and 
+            lattice = struct.lattice.matrix
+            gm1_strain = 0
+            gm3_a0_strain = 0
+            gm3_0a_strain = 0
+            gm5_a00_strain = 0
+            gm5_0a0_strain = 0
+            gm5_00a_strain = 0
+            oct_rot_x = 0
+            oct_rot_y = 0
+            oct_rot_z = 0
+            exx = 0
+            eyy = 0
+            ezz = 0
+            exy = 0
+            exz = 0
+            eyz = 0
+
             if keys[i] == 'gm1':
                 'math for gm1'
+                gm1_strain = float_list[i]*np.sqrt(3)/3
+
             if keys[i] == 'gm3_a0':
                 'math for gm3_a0'
+                gm3_a0_strain = float_list[i]*np.sqrt(6)/3
+
             if keys[i] == 'gm3_0a':
                 'math for gm3_0a'
+                gm3_0a_strain = float_list[i]*np.sqrt(2)/2
+
             if keys[i] == 'gm5_a00':
                 'math for gm5_a00'
+                gm5_a00_strain = float_list[i]*np.sqrt(2)/2
+
             if keys[i] == 'gm5_0a0':
                 'math for gm5_0a0'
+                gm5_0a0_strain = float_list[i]*np.sqrt(2)/2
+
             if keys[i] == 'gm5_00a':
                 'math for gm5_00a'
+                gm5_00a_strain = float_list[i]*np.sqrt(2)/2
+
             if keys[i] == 'oct_rot_x':
                 'x-rot'
             if keys[i] == 'oct_rot_y':
@@ -196,29 +227,47 @@ def create_directories_with_poscars(parent_structure, param_dict):
                 'z-rot'
             if keys[i] == 'exx':
                 'exx'
+                exx = float_list[i]
             if keys[i] == 'eyy':
                 'eyy'
+                eyy = float_list[i]
             if keys[i] == 'ezz':
                 'ezz'
+                ezz = float_list[i]
             if keys[i] == 'exy':
                 'exy'
+                exy = float_list[i]*np.sqrt(2)/2
             if keys[i] == 'exz':
                 'exz'
+                exz = float_list[i]*np.sqrt(2)/2
             if keys[i] == 'eyz':
                 'eyz'
+                eyz = float_list[i]*np.sqrt(2)/2
 
-            updated_lattice = np.array([[1,0,0],[0,1,0],[0,0,1]])
+            uniaxial_strains = np.zeros((3,3))
+            shear_strains = np.zeros((3,3))
 
+            uniaxial_strains = np.array([[gm1_strain - 0.5*gm3_a0_strain + gm3_0a_strain + exx, 0, 0],
+                                         [0, gm1_strain - 0.5*gm3_a0_strain - gm3_0a_strain + eyy, 0],
+                                         [0, 0, gm1_strain + gm3_a0_strain + ezz]])
+            
+            shear_strains = np.array([[0, (gm5_a00_strain + exy)*lattice[1,1], (gm5_0a0_strain + exz)*lattice[2,2]],
+                                      [(gm5_a00_strain + exy)*lattice[0,0], 0, (gm5_00a_strain + eyz)*lattice[2,2]],
+                                      [(gm5_0a0_strain + exz)*lattice[0,0], (gm5_00a_strain + eyz)*lattice[2,2], 0]])
+
+            updated_lattice = np.transpose(uniaxial_strains.dot(np.transpose(lattice)) + shear_strains + np.transpose(lattice))
             new_structure = Structure(updated_lattice, struct.species, struct.frac_coords)
             new_structure.to(fmt='poscar', filename = os.path.join(leaf_dir,'POSCAR'))
             print(f"Copied '{file_path}' to '{leaf_dir}'")
     
     list_of_params = get_values_from_dict(param_dict)
     list_of_lists = convert_values_to_list(list_of_params)
+    struct = Structure.from_file(parent_structure)
+
     create_nested_directories(list_of_lists)
     copy_file_to_leaf_directories(parent_structure)
 
     return
 
-params = {'gm1':[1,4], 'gm5_00a':4}
+params = {'gm1':[-0.1,0,0.1], 'gm3_a0':[-0.1,0,0.1]}
 create_directories_with_poscars(parent_structure='./POSCAR', param_dict=params)
