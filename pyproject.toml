@@ -1,6 +1,6 @@
 [project]
 name = 'matdistort'
-version = "0.0.1"
+version = "0.0.2"
 description = "Automated function for setting up VASP calculations"
 authors = [{ name = "Zach Van Fossan", email = "zvanfossan@gmail.com"}]
 requires-python = ">=3.9"
@@ -13,7 +13,3 @@ dependencies = [
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
-
-#[testpypi]
-#username = _token__
-#password = pypi-AgENdGVzdC5weXBpLm9yZwIkNGIyYWQ3NjgtNzU5MC00ODdkLTllZDEtNjQ3YjEyZDM3NjBiAAIqWzMsImZlMzIxNTc3LWYzODQtNDE0MC05M2FkLTM4ZmYzM2YzOGE1MiJdAAAGIFx98wbGiWdJ6D9MFwe7NUYcBneEMg3dmUAVlTe2p2Cz
