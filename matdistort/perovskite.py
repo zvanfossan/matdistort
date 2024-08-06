@@ -268,6 +268,3 @@ def create_directories_with_poscars(parent_structure, param_dict):
     copy_file_to_leaf_directories(parent_structure)
 
     return
-
-params = {'gm1':[-0.1,0,0.1], 'gm3_a0':[-0.1,0,0.1]}
-create_directories_with_poscars(parent_structure='./POSCAR', param_dict=params)
