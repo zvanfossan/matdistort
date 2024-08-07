@@ -167,6 +167,7 @@ def create_directories_with_poscars(parent_structure, param_dict):
         leaf_dirs = []
         find_leaf_dirs(base_path)
         keys = get_keys_from_dict(param_dict)
+        print("Number of calculations setup:", len(leaf_dirs))
         for i, leaf_dir in enumerate(leaf_dirs):
 
             normalized_path = os.path.normpath(leaf_dir)
@@ -176,7 +177,6 @@ def create_directories_with_poscars(parent_structure, param_dict):
                 if 'n' in value:
                     directories[i] = value.replace('n', '-')
             float_list = [float(item) for item in directories]
-            print(float_list)
             ###modify POSCAR structure here and 
             lattice = struct.lattice.matrix
             gm1_strain = 0
@@ -258,7 +258,6 @@ def create_directories_with_poscars(parent_structure, param_dict):
             updated_lattice = np.transpose(uniaxial_strains.dot(np.transpose(lattice)) + shear_strains + np.transpose(lattice))
             new_structure = Structure(updated_lattice, struct.species, struct.frac_coords)
             new_structure.to(fmt='poscar', filename = os.path.join(leaf_dir,'POSCAR'))
-            print(f"Copied '{file_path}' to '{leaf_dir}'")
     
     list_of_params = get_values_from_dict(param_dict)
     list_of_lists = convert_values_to_list(list_of_params)
