@@ -1,7 +1,8 @@
 import os
 import shutil
-
-def find_leaf_dirs(current_path, leaf_dirs):
+def dirs():
+    leaf_dirs = []
+    def find_leaf_dirs(current_path):
         is_leaf = True
         for entry in os.listdir(current_path):
             entry_path = os.path.join(current_path, entry)
@@ -10,6 +11,8 @@ def find_leaf_dirs(current_path, leaf_dirs):
                 find_leaf_dirs(entry_path)
         if is_leaf:
             leaf_dirs.append(current_path)
+        return leaf_dirs
+    return find_leaf_dirs('base_dir')
 
 def copy_file_to_leaf_directories(incar_path, kpoint_path, potcar_path, submitsh_path, base_path='base_dir'):
     """
@@ -19,38 +22,48 @@ def copy_file_to_leaf_directories(incar_path, kpoint_path, potcar_path, submitsh
         file_path (str): The path of the file to be copied.
         base_path (str): The base directory where the nested directories are created.
     """
-
-    leaf_dirs = []
-    find_leaf_dirs(base_path, leaf_dirs)
     
-    for leaf_dir in leaf_dirs:
+    for leaf_dir in dirs():
         shutil.copy(incar_path, leaf_dir)
         shutil.copy(kpoint_path, leaf_dir)
         shutil.copy(potcar_path, leaf_dir)
         shutil.copy(submitsh_path, leaf_dir)
     return
 
-def run_calcs(portion, base_path='base_dir'):
+def run_calcs(portion):#, current_path='base_dir'):
     """
     Submits calculations
 
     Parameters:
         portion (str): specify whether all or a subsection of the calculations should be run.
+                        Inputs for this can be 'all' if all calculations are to be submitted 
+                        or the name of a specific directory
 
     """
-    leaf_dirs = []
-    find_leaf_dirs(base_path, leaf_dirs)
-    portion
+    initital_directory = os.getcwd()
+    if portion == 'all':
+        for value in dirs():
+            os.chdir(value)
+            print(os.getcwd())
+            #os.system('sbatch submit.sh')
+            os.chdir(initital_directory)
+            print(os.getcwd())
+
+    else:
+        for i, value in enumerate(dirs()):
+            value = value[:len(portion)]
+            if value == portion:
+                os.chdir(dirs()[i])
+                print(os.getcwd())
+                #os.system('sbatch submit.sh')
+                os.chdir(initital_directory)
+                print(os.getcwd())
     return
 
+def get_free_energy():
+     return
 
+def get_phonon_frequencies():
+     return
 
-# Example usage
-list_of_lists = [
-    [-1, 2, 3],  # This will create 3 directories at the first level
-    [4, 5],     # This will create 2 directories inside each first level directory
-    [6]         # This will create 1 directory inside each second level directory
-]
-
-#create_nested_directories(list_of_lists)
-copy_file_to_leaf_directories('./test', base_path='base_dir')
+run_calcs(portion='all')
